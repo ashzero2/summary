@@ -4,8 +4,7 @@ const ytdl = require("ytdl-core");
 const fs = require("fs");
 
 const app = express();
-const port = 3000;
-let UPLOAD_URL = "default";
+const port = 3100;
 
 const assembly = axios.create({
   baseURL: "https://api.assemblyai.com/v2",
@@ -14,12 +13,6 @@ const assembly = axios.create({
     "transfer-encoding": "chunked",
   },
 });
-
-const wait = (time) => {
-  return new Promise((resolve) => {
-    setTimeout(resolve, time);
-  });
-};
 
 const getEntity = () => {
   console.log("Entity\n");
@@ -33,38 +26,43 @@ const getEntity = () => {
       entity_detection: true,
     })
     .then((res) => {
-      return res.data;
+      console.log(res.data);
     })
     .catch((err) => console.error(err));
 };
 
-async function upFile() {
-  const file = "audio.mp4";
-
-  async function newFile() {
-    fs.readFile(file, async (err, data) => {
-      if (err) return console.error(err);
-
-      await assembly
-        .post("/upload", data)
-        .then((res) => {
-          UPLOAD_URL = res.data.upload_url;
-          console.log(UPLOAD_URL);
-        })
-        .catch((err) => console.error(err));
-    });
-  }
-
-  newFile().then((resp) => console.log(resp));
-  return UPLOAD_URL;
-}
-
-app.get("/:url", async (req, res) => {
+app.get("/download/:url", (req, res) => {
   const link = `https://youtu.be/${req.params.url}`;
   ytdl(link, { filter: "audioonly" }).pipe(fs.createWriteStream("audio.mp4"));
+});
 
-  const se = await upFile();
-  console.log(se);
+app.get("/upload", (req, res) => {
+  const file = "audio.mp4";
+
+  fs.readFile(file, async (err, data) => {
+    if (err) return console.error(err);
+
+    assembly
+      .post("/upload", data)
+      .then((res) => {
+        let UPLOAD_URL = res.data.upload_url;
+        fs.writeFile("link.txt", UPLOAD_URL, (err) => {
+          if (err) throw err;
+        });
+        console.log(UPLOAD_URL);
+      })
+      .catch((err) => console.error(err));
+  });
+});
+
+app.get("/getLink", (req, res) => {
+  fs.readFile("link.txt", "utf8", (err, data) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    res.send(data);
+  });
 });
 
 app.listen(port, () => {
