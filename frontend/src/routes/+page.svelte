@@ -1,6 +1,8 @@
 <script>
 	import { onMount } from 'svelte';
-	let text;
+	let original_text;
+	let org_length;
+	let summarized_text;
 
 	onMount(async () => {
 		const resp = await fetch(
@@ -14,11 +16,37 @@
 		);
 
 		resp.json().then((data) => {
-			text = JSON.stringify(data);
+			original_text = data.text;
+			summarized_text = data.summary;
+			org_length = data.words.length;
+			console.log(data);
 		});
 	});
 </script>
 
 <main>
-	<h1>{text}</h1>
+	<div class="flex flex-col justify-center items-center w-screen h-screen gap-20">
+		<div>
+			<h1 class="italic text-3xl">SUMMARY CREATOR</h1>
+		</div>
+		<div class="flex flex-row gap-20 w-full justify-center">
+			<textarea
+				disabled
+				class="own-text textarea textarea-primary textarea-bordered textarea-lg scrollbar-thin w-2/6"
+				placeholder="Original Text"
+				bind:value={original_text}
+			/>
+			<textarea
+				disabled
+				rows="10"
+				class="own-text textarea textarea-primary rows
+				textarea-bordered textarea-lg scrollbar-thin w-2/6"
+				placeholder="Summarized Text"
+				bind:value={summarized_text}
+			/>
+		</div>
+	</div>
 </main>
+
+<style>
+</style>
