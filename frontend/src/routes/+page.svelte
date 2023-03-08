@@ -7,9 +7,9 @@
 
 	let url;
 	let video_url;
-	let original_text;
-	let org_length;
-	let summarized_text;
+	let entities = [];
+	let highlights = [];
+	let analysis = false;
 	let status = 'processing';
 	let datas = {};
 
@@ -58,9 +58,9 @@
 			resp.json().then((data) => {
 				console.log(data);
 				datas = data;
-				original_text = data.text;
-				summarized_text = data.summary;
 				status = data.status;
+				highlights = data.auto_highlights_result.results;
+				entities = data.entities;
 				console.log(status);
 			});
 			await wait(5000);
@@ -68,8 +68,6 @@
 		toast.pop();
 	}
 </script>
-
-<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 
 <main>
 	<div class="flex flex-col items-center w-screen h-screen gap-20">
@@ -79,41 +77,90 @@
 			</div>
 			<div class="flex-none">
 				<ul class="menu menu-horizontal px-1">
-					<li><a>ANALYSE</a></li>
-					<li><a>DIE</a></li>
+					<li><button class="" on:click={() => (analysis = !analysis)}>ANALYSE</button></li>
+					<li><button class="">BRUH</button></li>
 					<li>
-						<button data-toggle-theme="dark,light" data-act-class="ACTIVECLASS"
-							><Sun size={22} /></button
-						>
+						<button data-toggle-theme="dark,light" data-act-class="ACTIVECLASS">
+							<Sun size={22} />
+						</button>
 					</li>
 				</ul>
 			</div>
 		</div>
-		<div class="flex flex-row gap-5">
-			<input
-				type="text"
-				bind:value={url}
-				placeholder="https://youtu.be/YehWi2"
-				class="input input-bordered w-full max-w-xs"
-			/>
-			<input type="submit" value="summarize" class="btn" on:click={handleInput} />
-		</div>
-		<div class="flex flex-row gap-20 w-full justify-center">
-			<textarea
-				disabled
-				class="own-text textarea textarea-primary textarea-bordered textarea-lg scrollbar-thin w-2/6"
-				placeholder="Original Text"
-				bind:value={original_text}
-			/>
-			<textarea
-				disabled
-				rows="10"
-				class="own-text textarea textarea-primary rows
+		{#if !analysis}
+			<div class="flex flex-row gap-5">
+				<input
+					type="text"
+					bind:value={url}
+					placeholder="https://youtu.be/YehWi2"
+					class="input input-bordered w-full max-w-xs"
+				/>
+				<input type="submit" value="summarize" class="btn" on:click={handleInput} />
+			</div>
+			<div class="flex flex-row gap-20 w-full justify-center">
+				<textarea
+					disabled
+					class="own-text textarea textarea-primary textarea-bordered textarea-lg scrollbar-thin w-2/6"
+					placeholder="Original Text"
+					bind:value={datas.text}
+				/>
+				<textarea
+					disabled
+					rows="10"
+					class="own-text textarea textarea-primary rows
 				textarea-bordered textarea-lg scrollbar-thin w-2/6"
-				placeholder="Summarized Text"
-				bind:value={summarized_text}
-			/>
-		</div>
+					placeholder="Summarized Text"
+					bind:value={datas.summary}
+				/>
+			</div>
+		{:else}
+			<div class="flex flex-row gap-20">
+				<div class="overflow-x-auto">
+					<table class="table w-full">
+						<!-- head -->
+						<thead>
+							<tr>
+								<th />
+								<th>TYPE</th>
+								<th>TEXT</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each entities as entity, i}
+								<tr>
+									<th>{i + 1}</th>
+									<td>{entity.entity_type}</td>
+									<td>{entity.text}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+				<div
+					class="overflow-y-scroll h-4/6 scrollbar-track-inherit scrollbar-thumb-inherit hover:scrollbar-thumb-inherit"
+				>
+					<table class="table w-full">
+						<!-- head -->
+						<thead>
+							<tr>
+								<th />
+								<th>TEXT</th>
+								<th>COUNT</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each highlights as highlight, i}
+								<tr>
+									<th>{i + 1}</th>
+									<td>{highlight.text}</td>
+									<td>{highlight.count}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		{/if}
 	</div>
 </main>
 
