@@ -1,9 +1,11 @@
 const express = require("express");
 const axios = require("axios");
+const cors = require("cors");
 const ytdl = require("ytdl-core");
 const fs = require("fs");
 
 const app = express();
+app.use(cors());
 const port = 3100;
 
 const assembly = axios.create({
@@ -14,8 +16,8 @@ const assembly = axios.create({
   },
 });
 
-const getEntity = () => {
-  console.log("Entity\n");
+const getID = (UPLOAD_URL) => {
+  console.log("getID");
   assembly
     .post("/transcript", {
       audio_url: UPLOAD_URL,
@@ -26,7 +28,10 @@ const getEntity = () => {
       entity_detection: true,
     })
     .then((res) => {
-      console.log(res.data);
+      console.log(res.data.id);
+      fs.writeFile("link.txt", res.data.id, (err) => {
+        if (err) throw err;
+      });
     })
     .catch((err) => console.error(err));
 };
@@ -34,6 +39,8 @@ const getEntity = () => {
 app.get("/download/:url", (req, res) => {
   const link = `https://youtu.be/${req.params.url}`;
   ytdl(link, { filter: "audioonly" }).pipe(fs.createWriteStream("audio.mp4"));
+  console.log("\nDownloaded video");
+  res.send("DONE");
 });
 
 app.get("/upload", (req, res) => {
@@ -46,10 +53,7 @@ app.get("/upload", (req, res) => {
       .post("/upload", data)
       .then((res) => {
         let UPLOAD_URL = res.data.upload_url;
-        fs.writeFile("link.txt", UPLOAD_URL, (err) => {
-          if (err) throw err;
-        });
-        console.log(UPLOAD_URL);
+        getID(UPLOAD_URL);
       })
       .catch((err) => console.error(err));
   });
@@ -59,9 +63,9 @@ app.get("/getLink", (req, res) => {
   fs.readFile("link.txt", "utf8", (err, data) => {
     if (err) {
       console.error(err);
-      return;
+      retyurn;
     }
-    res.send(data);
+    res.send({ video_link: data });
   });
 });
 

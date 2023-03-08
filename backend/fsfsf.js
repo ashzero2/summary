@@ -8,6 +8,6 @@ const assembly = axios.create({
 });
 
 assembly
-  .get(`/transcript/rn20dxaa4f-56b9-4f77-a54b-d1946b01e4ee`)
+  .get(`/transcript/FTUV0t6JaDA`)
   .then((res) => console.log(res.data))
   .catch((err) => console.error(err));
